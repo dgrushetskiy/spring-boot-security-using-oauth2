@@ -1,7 +1,5 @@
 package com.example.demo.config;
 
-import com.example.demo.dao.UserRepo;
-import com.example.demo.service.AppUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,71 +20,25 @@ import javax.servlet.http.HttpServletResponse;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private JwtTokenFilter jwtTokenFilter;
 
-    @Autowired
-    private AppUserDetailsService appUserDetailsService;
 
-    @Autowired
-    UserRepo repoUsr;
-
-    @Autowired
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(appUserDetailsService);
-
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // Enable CORS and disable CSRF
-        http = http.cors().and().csrf().disable();
 
-        // Set session management to stateless
-        http = http
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and();
+        http
+                .csrf().disable()
+                .authorizeRequests()
+                .antMatchers("/students").authenticated() // Block this
+                .antMatchers("/help").permitAll() // Allow this for all
+                .anyRequest().authenticated()
+                .and().logout().logoutSuccessUrl("/").permitAll()
+                .and()
+                .oauth2Login();
 
-        // Set unauthorized requests exception handler
-        http = http
-                .exceptionHandling()
-                .authenticationEntryPoint(
-                        (request, response, ex) -> {
-                            response.sendError(
-                                    HttpServletResponse.SC_UNAUTHORIZED,
-                                    ex.getMessage()
-                            );
-                        }
-                )
-                .and();
 
-        // Set permissions on endpoints
-        http.authorizeRequests()
-                // Our public endpoints
-                .antMatchers(HttpMethod.POST, "/authenticate").permitAll()
-
-                // Our private endpoints
-                .antMatchers(HttpMethod.GET, "/students").hasAnyAuthority("ADMIN", "USER")
-                .antMatchers(HttpMethod.GET, "/teachers").hasAuthority("ADMIN")
-                .anyRequest().authenticated();
-
-        // Add JWT token filter
-        http.addFilterBefore(
-                jwtTokenFilter,
-                UsernamePasswordAuthenticationFilter.class
-        );
     }
 
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
+
 
 }

@@ -1,10 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dao.StudentRepo;
-import com.example.demo.model.AuthenticationRequest;
-import com.example.demo.model.AuthenticationResponse;
 import com.example.demo.model.Student;
-import com.example.demo.service.AppUserDetailsService;
 import com.example.demo.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +20,6 @@ public class StudentController {
     @Autowired
     private StudentRepo repo;
 
-    @Autowired
-    private AppUserDetailsService userDetailsService;
-
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @GetMapping("/students")
     private List<Student> getAllStudents(){
@@ -65,28 +54,10 @@ public class StudentController {
                     return repo.save(newStudent);
                 });
     }
-
-    @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
-
-        System.out.println("createAuthenticationToken called with " + authenticationRequest.getUsername()
-         + " " + authenticationRequest.getPassword());
-
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
-            );
-            System.out.println("Authenticated successfully");
-        }
-        catch (BadCredentialsException e) {
-            throw new Exception("Incorrect username or password", e);
-        }
-
-
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getUsername());
-
-        final String jwt = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+    @GetMapping("/help")
+    private String getHelp(){
+        return "Help is on the way";
     }
+
+
 }
